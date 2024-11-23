@@ -1,6 +1,6 @@
-# pages/doctor.py
 import streamlit as st
 import pandas as pd
+import re  # Import regular expressions for validation
 from database.db import connect_db
 
 st.set_page_config(
@@ -10,23 +10,39 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Function to validate text input (only letters and spaces allowed)
+def is_valid_text(text):
+    return bool(re.match("^[A-Za-z\s]+$", text))
+
+def is_valid_contact(contact):
+    return bool(re.match("^\d{10}$", contact))
+
 def create_doctor():
     st.subheader("Add a new doctor", divider="orange")
     name = st.text_input("Name", placeholder="Name of Doctor")
     specialization = st.text_input("Specialization", placeholder="Specialization of Doctor")
-    contact = st.number_input("Contact", placeholder="Contact number of Doctor", step=1)
-    
+    contact = st.text_input("Contact", placeholder="Contact number of Doctor")  # Keep it as a string
+
     # Get availability days
     availability_days = st.multiselect("Available on days", ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], default=None)
-    
+
     col1, col2 = st.columns(2)
     with col1:
-        availability_from = st.time_input("Availabile from", value=None)
+        availability_from = st.time_input("Available from", value=None)
     with col2:
-        availability_to = st.time_input("Availabile to", value=None)
+        availability_to = st.time_input("Available to", value=None)
 
     # Check if any availability is selected
     if st.button("Add Doctor"):
+        if not name or not is_valid_text(name):
+            st.error("Please enter a valid name (letters and spaces only).")
+            return
+        if not specialization or not is_valid_text(specialization):
+            st.error("Please enter a valid specialization (letters and spaces only).")
+            return
+        if not is_valid_contact(str(contact)):  # Convert contact to string for validation
+            st.error("Please enter a valid 10-digit contact number.")
+            return
         if not availability_days:
             st.error("Please select at least one day for availability.")
             return
@@ -44,7 +60,6 @@ def create_doctor():
         conn.commit()
         conn.close()
         st.success("Doctor added successfully!")
-
 
 def view_doctors():
     st.subheader("View Doctors", divider="orange")
@@ -98,6 +113,15 @@ def update_doctor():
             availability_time_to = st.time_input("Availability to", value=pd.to_datetime(availability_to, format='%H:%M').time())
 
         if st.button("Update Doctor"):
+            if not name or not is_valid_text(name):
+                st.error("Please enter a valid name (letters and spaces only).")
+                return
+            if not specialization or not is_valid_text(specialization):
+                st.error("Please enter a valid specialization (letters and spaces only).")
+                return
+            if not is_valid_contact(contact):
+                st.error("Please enter a valid contact number.")
+                return
             if not availability_days_selected:
                 st.error("Please select at least one day for availability.")
                 return
@@ -145,7 +169,6 @@ def delete_doctor():
         conn.close()
         
         st.success("Doctor deleted successfully!")
-
 
 def doctor_management():
     st.title("Doctor Management")
