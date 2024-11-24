@@ -5,7 +5,7 @@ from datetime import datetime
 
 st.set_page_config(
     page_title="Appointment Management",
-    page_icon=":hospital:",
+    page_icon="🗓️",
     layout="wide",
     initial_sidebar_state="auto"
 )
@@ -77,13 +77,41 @@ def create_appointment():
         conn.commit()
         conn.close()
         st.success("Appointment added successfully!")
+        # st.rerun()
 
 def view_appointments():
     st.subheader("View Appointments", divider="orange")
+    
     conn = connect_db()
-    df = pd.read_sql_query("SELECT * FROM appointments", conn)
+    cursor = conn.cursor()
+    
+    # Fetch all doctors
+    cursor.execute("SELECT id, name FROM doctors")
+    doctors = cursor.fetchall()
+
+    if not doctors:
+        st.error("No doctors available.")
+        conn.close()
+        return
+
+    doctor_options = [f"{doctor[1]} (ID: {doctor[0]})" for doctor in doctors]
+    selected_doctor = st.selectbox("Filter by Doctor", ["All Doctors"] + doctor_options, index=0)
+
+    # Fetch appointments
+    if selected_doctor != "All Doctors":
+        doctor_name = selected_doctor.split(" (ID:")[0].strip()
+        query = "SELECT * FROM appointments WHERE doctor_name = ?"
+        df = pd.read_sql_query(query, conn, params=(doctor_name,))
+    else:
+        query = "SELECT * FROM appointments"
+        df = pd.read_sql_query(query, conn)
+    
     conn.close()
-    st.dataframe(df, use_container_width=True, hide_index=True)
+
+    if df.empty:
+        st.error("No appointments available for the selected doctor.")
+    else:
+        st.dataframe(df, use_container_width=True, hide_index=True)
 
 def update_appointment():
     st.subheader("Update Appointment", divider="orange")
@@ -95,7 +123,7 @@ def update_appointment():
     conn.close()
 
     if not appointments:
-        st.warning("No appointments available to update.")
+        st.error("No appointments available to update.")
         return
 
     appointment_options = [f"{appointment[1]} (ID: {appointment[0]})" for appointment in appointments]
@@ -191,6 +219,7 @@ def update_appointment():
                 conn.commit()
                 conn.close()
                 st.success("Appointment updated successfully!")
+                st.rerun()
         else:
             st.error("No appointment found with the selected details.")
 
@@ -200,31 +229,56 @@ def delete_appointment():
     conn = connect_db()
     cursor = conn.cursor()
     
-    cursor.execute("SELECT id, name FROM appointments")
+    # Fetch all doctors
+    cursor.execute("SELECT id, name FROM doctors")
+    doctors = cursor.fetchall()
+
+    if not doctors:
+        st.error("No doctors available.")
+        conn.close()
+        return
+
+    doctor_options = [f"{doctor[1]} (ID: {doctor[0]})" for doctor in doctors]
+    selected_doctor = st.selectbox("Filter by Doctor", ["All Doctors"] + doctor_options, index=0)
+
+    # Fetch appointments
+    if selected_doctor != "All Doctors":
+        doctor_name = selected_doctor.split(" (ID:")[0].strip()
+        cursor.execute("SELECT id, name FROM appointments WHERE doctor_name = ?", (doctor_name,))
+    else:
+        cursor.execute("SELECT id, name FROM appointments")
     appointments = cursor.fetchall()
     conn.close()
 
     if not appointments:
-        st.warning("No appointments available to delete.")
+        st.error("No appointments available for the selected doctor.")
         return
 
     appointment_options = [f"{appointment[1]} (ID: {appointment[0]})" for appointment in appointments]
-    selected_option = st.selectbox("Select Appointment", options=appointment_options, placeholder="Select an appointment to delete", index=None)
+    selected_options = st.multiselect("Select Appointments to Delete", options=appointment_options, placeholder="Select appointments to delete")
 
-    if st.button("Delete Appointment"):
-        if not selected_option:
-            st.error("Please select an appointment to delete.")
+    if st.button("Delete Appointments", disabled=not selected_options, use_container_width=True):
+        if not selected_options:
+            st.error("Please select at least one appointment to delete.")
             return
-
-        appointment_id = int(selected_option.split("(ID: ")[1].strip(")"))
 
         conn = connect_db()
         cursor = conn.cursor()
-        cursor.execute("DELETE FROM appointments WHERE id = ?", (appointment_id,))
+
+        for selected_option in selected_options:
+            # Extract appointment ID from the selected option
+            appointment_id = int(selected_option.split("(ID: ")[1].strip(")"))
+
+            # Delete the appointment from the database
+            cursor.execute("DELETE FROM appointments WHERE id = ?", (appointment_id,))
+        
         conn.commit()
         conn.close()
         
-        st.success(f"Appointment '{selected_option}' deleted successfully!")
+        st.success(f"Successfully deleted {len(selected_options)} appointment(s)!")
+        st.rerun()
+
+
 
 def appointment_management():
     st.title("Appointment Management")

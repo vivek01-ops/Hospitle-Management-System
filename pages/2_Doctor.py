@@ -5,7 +5,7 @@ from database.db import connect_db
 
 st.set_page_config(
     page_title="Doctor Management",
-    page_icon=":hospital:",
+    page_icon="🩺",
     layout="wide",
     initial_sidebar_state="auto"
 )
@@ -159,7 +159,7 @@ def delete_doctor():
     # Select doctor to delete
     doctor_id = st.selectbox("Select a doctor to delete", [f"{doctor[1]} (ID: {doctor[0]})" for doctor in doctors], index=None, placeholder="Select a doctor to delete")
 
-    if st.button("Delete Doctor"):
+    if st.button("Delete Doctor", disabled=doctor_id is None    , use_container_width=True):
         # Extract the ID from the selected option
         selected_id = doctor_id.split(" (ID: ")[1][:-1]  # Extract ID from the selected text
         conn = connect_db()

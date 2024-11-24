@@ -6,7 +6,7 @@ import re
 
 st.set_page_config(
     page_title="Patient Management",
-    page_icon=":hospital:",
+    page_icon="🛌",
     layout="wide",
     initial_sidebar_state="auto"
 )
@@ -206,10 +206,9 @@ def update_patient():
 
 
 def delete_patient():
-    col1, col2 = st.columns(2)
     st.subheader("Delete Patient", divider="orange")
     
-    st.header("Filter Patients by Date of Admission", divider="red")
+    st.subheader("Filter Patients by Date of Admission", divider="red")
     col1, col2 = st.columns(2)
     with col1:
         start_date = st.date_input("From Date", min_value=datetime.date(1900, 1, 1), value=datetime.date.today(), format="DD/MM/YYYY")
@@ -233,24 +232,22 @@ def delete_patient():
         st.error("No patients found in the selected date range.")
         return
 
-    with col1:
-        patients_df = pd.DataFrame(patients, columns=["ID", "Name", "Date of Admission"])
-        st.dataframe(patients_df, use_container_width=True, hide_index=True)
+    # Populate dropdown with patient names
+    patient_list = [f"{patient[1]} (ID: {patient[0]})" for patient in patients]
+    patient_ids = [patient[0] for patient in patients]
+    
+    selected_patient = st.selectbox("Select Patient to Delete", options=patient_list, placeholder="Select a patient to delete", index=None)
 
-        patient_list = [f"{row['Name']} (ID: {row['ID']})" for _, row in patients_df.iterrows()]
-        patient_ids = patients_df["ID"].tolist()
-
-    with col2:
-        selected_patient = st.selectbox("Select Patient to Delete", options=patient_list, placeholder="Select a patient to delete")
-        
-    if st.button("Delete Patient", use_container_width=True):
-            patient_id = patient_ids[patient_list.index(selected_patient)]
-            conn = connect_db()
-            cursor = conn.cursor()
-            cursor.execute("DELETE FROM patients WHERE id = ?", (patient_id,))
-            conn.commit()
-            conn.close()
-            st.success("Patient deleted successfully!")
+    if st.button("Delete Patient", disabled=selected_patient is None, use_container_width=True):
+        patient_id = patient_ids[patient_list.index(selected_patient)]
+        conn = connect_db()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM patients WHERE id = ?", (patient_id,))
+        conn.commit()
+        conn.close()
+       
+        st.success("Patient deleted successfully!")
+        # st.rerun()
 
 
 def patient_management():
