@@ -9,7 +9,7 @@ st.set_page_config(
     page_title="Billing Management",
     page_icon=":hospital:",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="auto"
 )
 
 def create_billing():

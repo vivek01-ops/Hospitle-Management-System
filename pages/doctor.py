@@ -7,7 +7,7 @@ st.set_page_config(
     page_title="Doctor Management",
     page_icon=":hospital:",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="auto"
 )
 
 # Function to validate text input (only letters and spaces allowed)

@@ -8,7 +8,7 @@ st.set_page_config(
     page_title="Patient Management",
     page_icon=":hospital:",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="auto"
 )
 
 def validate_patient_data(name, dob, age, gender, contact, date_of_admission, address):

@@ -7,7 +7,7 @@ st.set_page_config(
     page_title="Appointment Management",
     page_icon=":hospital:",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="auto"
 )
 
 def is_valid_patient_name(name):
