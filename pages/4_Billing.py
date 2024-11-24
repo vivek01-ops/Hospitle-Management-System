@@ -4,7 +4,7 @@ import pandas as pd
 from database.db import connect_db
 import datetime
 from datetime import date
-from fpdf import FPDF 
+
 import io
 
 st.set_page_config(
