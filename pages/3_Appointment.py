@@ -24,7 +24,6 @@ def create_appointment():
     time = st.time_input("Time of Appointment")
     reason = st.text_area("Reason for Appointment", placeholder="Write detailed reason for appointment here", height=122)
     
-    # Fetching the list of doctors from the database
     conn = connect_db()
     cursor = conn.cursor()
     cursor.execute("SELECT id, name FROM doctors")
@@ -55,16 +54,12 @@ def create_appointment():
             st.error("Please enter a patient name.")
             return
 
-        # Combine date and time into a single datetime object
         date_time = datetime.combine(date, time)
 
         conn = connect_db()
         cursor = conn.cursor()
-
-        # Extract the doctor ID from the selected option
         doctor_name = selected_doctor.split(" (ID:")[0].strip()
 
-        # Check if the doctor is available at the specified date and time
         cursor.execute("""
             SELECT COUNT(*) FROM appointments 
             WHERE doctor_name = ? AND date_time = ?
@@ -165,7 +160,7 @@ def update_appointment():
                     st.error("Please enter a valid reason for the appointment.")
                     return
 
-                if not is_valid_patient_name(patient_name):
+                if not is_valid_patient_name(patients_name):
                     st.error("Please enter a valid patient name.")
                     return
 

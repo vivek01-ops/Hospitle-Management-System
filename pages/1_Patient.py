@@ -69,13 +69,11 @@ def create_patient():
         medications = st.text_input("Current Medications", placeholder="Any Current Medications")
 
     if st.button("Add Patient"):
-        # Perform validation before adding the patient
         is_valid, validation_errors = validate_patient_data(name, dob, age, gender, contact, date_of_admission, address)
         if not is_valid:
             st.error(f"Validation Errors: {', '.join(validation_errors)}")
             return
         
-        # If validation passes, proceed to add the patient
         conn = connect_db()
         cursor = conn.cursor()
 
@@ -96,7 +94,6 @@ def create_patient():
 def view_patients():
     st.subheader("View Patients", divider="orange")
     
-    # Date range filter for viewing patients
     st.subheader("Filter Patients by Date of Admission", divider="red")
     col1, col2 = st.columns(2, gap="small")
     with col1:
@@ -108,14 +105,13 @@ def view_patients():
         st.error("Start Date should be earlier than End Date.")
         return
 
-    # Fetch patients from the database within the selected date range
     conn = connect_db()
     query = "SELECT * FROM patients WHERE date_of_admission BETWEEN ? AND ?"
     df = pd.read_sql_query(query, conn, params=(start_date, end_date))
     conn.close()
 
     if df.empty:
-        st.warning("No patients found in the selected date range.")
+        st.error("No patients found in the selected date range.")
         return
 
     st.dataframe(df, use_container_width=True, hide_index=True)
@@ -124,19 +120,17 @@ def view_patients():
 def update_patient():
     st.header("Update Patient", divider="orange")
 
-    # Date range filter for updating patients
     st.subheader("Filter Patients by Date of Admission", divider="red")
     col1, col2 = st.columns(2, gap="small", )
     with col1:
-        start_date = st.date_input("From Date", value=datetime.date(1900, 1, 1), format="DD/MM/YYYY")
+        start_date = st.date_input("From Date", value=datetime.date.today(), format="DD/MM/YYYY")
     with col2:
         end_date = st.date_input("To Date", value=datetime.date.today(), format="DD/MM/YYYY")
 
     if start_date > end_date:
         st.error("Start Date should be earlier than End Date.")
         return
-
-    # Fetch patients from the database within the selected date range
+    
     conn = connect_db()
     cursor = conn.cursor()
     cursor.execute(
@@ -150,14 +144,12 @@ def update_patient():
         st.error("No patients found in the selected date range.")
         return
 
-    # Display filtered patients
     patient_list = [f"{patient[1]} (ID: {patient[0]})" for patient in patients]
     patient_ids = [patient[0] for patient in patients]
 
     selected_patient = st.selectbox("Select Patient to Update", options=patient_list, placeholder="Select a patient to update")
     patient_id = patient_ids[patient_list.index(selected_patient)]
 
-    # Fetch and display patient data
     conn = connect_db()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM patients WHERE id = ?", (patient_id,))
@@ -217,7 +209,6 @@ def delete_patient():
     col1, col2 = st.columns(2)
     st.subheader("Delete Patient", divider="orange")
     
-    # Date range filter for deletion
     st.header("Filter Patients by Date of Admission", divider="red")
     col1, col2 = st.columns(2)
     with col1:
@@ -228,8 +219,6 @@ def delete_patient():
     if start_date > end_date:
         st.error("Start Date should be earlier than End Date.")
         return
-
-    # Fetch patients from the database within the selected date range
     
     conn = connect_db()
     cursor = conn.cursor()
@@ -253,8 +242,8 @@ def delete_patient():
 
     with col2:
         selected_patient = st.selectbox("Select Patient to Delete", options=patient_list, placeholder="Select a patient to delete")
-        # Delete the selected patient
-        if st.button("Delete Patient", use_container_width=True):
+        
+    if st.button("Delete Patient", use_container_width=True):
             patient_id = patient_ids[patient_list.index(selected_patient)]
             conn = connect_db()
             cursor = conn.cursor()
@@ -285,10 +274,10 @@ if __name__ == "__main__":
 
 hide_streamlit_style = """
 <style>
-#MainMenu {visibility: hidden;}
-footer {visibility: hidden;}
-#header {visibility: hidden;}
-git
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    #header {visibility: hidden;}
+    git
 </style>
 """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
